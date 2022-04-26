@@ -39,7 +39,7 @@ app.get('/', async (req: express.Request, res: express.Response) => {
             return res.status(400).json({error: "Please provide an url using ?url="})
         }
 
-        const youtubeDlWrap = new YoutubeDlWrap("./yt-dlp")
+        const youtubeDlWrap = new YoutubeDlWrap()
         const s3Service = new S3Service()
 
         console.log(`Downloading video ${url}`)
