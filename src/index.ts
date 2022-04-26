@@ -6,6 +6,8 @@ import YoutubeDlWrap from 'yt-dlp-wrap';
 
 import S3Service from '@/services/S3Service'
 
+import {getPreferredFormatForSite} from "@/util/formats"
+
 const app = express();
 
 app.use(cors({origin: "*"}))
@@ -50,6 +52,7 @@ app.get('/', async (req: express.Request, res: express.Response) => {
 
         const youtubeDlStream = youtubeDlWrap.execStream([
             url,
+            ...getPreferredFormatForSite(url),
             '--no-part',
             '-N 10',
         ], {shell: true});
