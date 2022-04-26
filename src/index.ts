@@ -7,6 +7,7 @@ import YoutubeDlWrap from 'yt-dlp-wrap';
 import S3Service from '@/services/S3Service'
 
 import {getPreferredFormatForSite} from "@/util/formats"
+import {getNormalizedString} from '@/util/string'
 
 const app = express();
 
@@ -48,7 +49,7 @@ app.get('/', async (req: express.Request, res: express.Response) => {
             '--get-filename'
         ], {shell: true})
 
-        console.log(id)
+        const normalizedId = getNormalizedString(id)
 
         const youtubeDlStream = youtubeDlWrap.execStream([
             url,
@@ -61,7 +62,7 @@ app.get('/', async (req: express.Request, res: express.Response) => {
         let buffer: Buffer | null = await streamToBuffer(youtubeDlStream)
 
         console.log("Uploading file to S3")
-        const uploaded = await s3Service.uploadFile(id, buffer)
+        const uploaded = await s3Service.uploadFile(normalizedId, buffer)
 
         if (!uploaded) {
             return res.status(400).json({error: "Couldn't upload file"})
@@ -69,7 +70,7 @@ app.get('/', async (req: express.Request, res: express.Response) => {
 
         buffer = null
 
-        const signedUrl = await s3Service.getSignedUrl(id)
+        const signedUrl = await s3Service.getSignedUrl(normalizedId)
 
         return signedUrl
             ? res.status(200).redirect(signedUrl)
