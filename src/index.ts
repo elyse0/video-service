@@ -1,6 +1,5 @@
 import express from "express"
 import cors from "cors"
-import {Stream} from 'stream'
 
 import YoutubeDlWrap from 'yt-dlp-wrap';
 
@@ -12,24 +11,6 @@ import {getNormalizedString} from '@/util/string'
 const app = express();
 
 app.use(cors({origin: "*"}))
-
-const streamToBuffer = async (stream: Stream): Promise<Buffer> => {
-    return new Promise<Buffer>((resolve, reject) => {
-        const _buf = Array<any>();
-
-        stream.on("data", chunk => _buf.push(chunk));
-        stream.on("end", () => {
-            console.log("StreamToBuffer: Finished!")
-            return resolve(Buffer.concat(_buf))
-        });
-        stream.on("error", err => {
-            console.log("StreamToBuffer: Error!")
-            return reject(`error converting stream - ${err}`)
-        });
-
-    });
-}
-
 
 app.get('/', async (req: express.Request, res: express.Response) => {
     try {
@@ -56,19 +37,14 @@ app.get('/', async (req: express.Request, res: express.Response) => {
             ...getPreferredFormatForSite(url),
             '--no-part',
             '-N 10',
-        ], {shell: true});
-
-        console.log("Storing stream into buffer")
-        let buffer: Buffer | null = await streamToBuffer(youtubeDlStream)
+        ], {shell: true}) as unknown as ReadableStream;
 
         console.log("Uploading file to S3")
-        const uploaded = await s3Service.uploadFile(normalizedId, buffer)
+        const uploaded = await s3Service.uploadFile(normalizedId, youtubeDlStream)
 
         if (!uploaded) {
             return res.status(400).json({error: "Couldn't upload file"})
         }
-
-        buffer = null
 
         const signedUrl = await s3Service.getSignedUrl(normalizedId)
 
