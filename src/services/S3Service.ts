@@ -15,7 +15,7 @@ class S3Service {
         region: process.env.S3_REGION,
     })
 
-    async uploadFile(key: string, body: Buffer): Promise<boolean> {
+    async uploadFile(key: string, body: ReadableStream | Blob | Uint8Array | Buffer): Promise<boolean> {
         const target: PutObjectCommandInput = {
             Bucket: this.bucketName as string,
             Key: key,
